@@ -63,4 +63,16 @@ stages:
             appName: 'FlaskWebApp1'
             package: '$(Build.ArtifactStagingDirectory)/**/*.zip'
             runtimeStack: 'PYTHON|3.11'
-          
+        - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+          inputs:
+            terraformVersion: 'latest'
+        - task: TerraformTaskV3@3
+          displayName: 'Init Terraform'
+          inputs:
+            provider: 'azurem'
+            command: 'init'
+            backendServiceArm: 'AzureConnection'
+            backendAzureRmResourceGroupName: 'cloud-shell-storage-westeurope'
+            backendAzureRmStorageAccountName: 'csb10030000a555cedc'
+            backendAzureRmContainerName: 'terraformstate'
+            backendAzureRmKey: 'tf/Webapp.tfState'
