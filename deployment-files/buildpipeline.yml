@@ -1,0 +1,66 @@
+trigger:
+
+
+   batch: true
+
+   branches:
+
+    include:
+
+        - master
+
+        - main
+
+ 
+
+name: $(Year:yy).$(Month).$(DayOfMonth)$(rev:.r)
+
+ 
+
+stages:
+
+ - stage: BuildDeps
+
+   displayName: Build Solutions
+
+   jobs:
+
+   - job: DetectChanges
+     steps:
+
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(Agent.BuildDirectory)/s'
+            Contents: '**/app.py'
+            TargetFolder: '$(Agent.BuildDirectory)/website'
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(Agent.BuildDirectory)/s'
+            Contents: '**/deployment-files/requirements.txt'
+            flattenFolders: true
+            TargetFolder: '$(Agent.BuildDirectory)/website'
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(Agent.BuildDirectory)/s'
+            Contents: '**/templates/**'
+            TargetFolder: '$(Agent.BuildDirectory)/website'
+        - task: ArchiveFiles@2
+          inputs:
+            rootFolderOrFile: '$(Agent.BuildDirectory)/website/'
+            includeRootFolder: false
+            archiveType: 'zip'
+            archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+            replaceExistingArchive: true
+        - task: PublishPipelineArtifact@1
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)'
+            artifact: 'website'
+            publishLocation: 'pipeline'
+        - task: AzureWebApp@1
+          inputs:
+            azureSubscription: 'AzureConnection'
+            appType: 'webAppLinux'
+            appName: 'FlaskWebApp1'
+            package: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+            runtimeStack: 'PYTHON|3.11'
+          
